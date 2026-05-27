@@ -1,147 +1,79 @@
+import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 function AngkorPattern() {
   return (
-    <svg
-      className="absolute inset-0 w-full h-full"
-      viewBox="0 0 800 400"
-      preserveAspectRatio="xMidYMid slice"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Silk diagonal lines */}
+    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <g opacity="0.06">
         {Array.from({ length: 20 }).map((_, i) => (
-          <line
-            key={i}
-            x1={i * 60 - 200}
-            y1="0"
-            x2={i * 60 + 200}
-            y2="400"
-            stroke="white"
-            strokeWidth="1"
-          />
+          <line key={i} x1={i * 60 - 200} y1="0" x2={i * 60 + 200} y2="400" stroke="white" strokeWidth="1" />
         ))}
       </g>
-
-      {/* Lotus pattern - left */}
       <g transform="translate(80, 200)" opacity="0.12">
-        {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle) => {
+        {[0,30,60,90,120,150,180,210,240,270,300,330].map((angle) => {
           const rad = (angle * Math.PI) / 180;
           return (
-            <ellipse
-              key={angle}
-              cx={Math.cos(rad) * 40}
-              cy={Math.sin(rad) * 40}
-              rx="8"
-              ry="20"
-              fill="white"
-              transform={`rotate(${angle} ${Math.cos(rad) * 40} ${Math.sin(rad) * 40})`}
-            />
+            <ellipse key={angle} cx={Math.cos(rad) * 40} cy={Math.sin(rad) * 40} rx="8" ry="20" fill="white"
+              transform={`rotate(${angle} ${Math.cos(rad) * 40} ${Math.sin(rad) * 40})`} />
           );
         })}
         <circle cx="0" cy="0" r="12" fill="white" />
       </g>
-
-      {/* Lotus pattern - right */}
       <g transform="translate(720, 200)" opacity="0.08">
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+        {[0,45,90,135,180,225,270,315].map((angle) => {
           const rad = (angle * Math.PI) / 180;
           return (
-            <ellipse
-              key={angle}
-              cx={Math.cos(rad) * 35}
-              cy={Math.sin(rad) * 35}
-              rx="6"
-              ry="18"
-              fill="white"
-              transform={`rotate(${angle} ${Math.cos(rad) * 35} ${Math.sin(rad) * 35})`}
-            />
+            <ellipse key={angle} cx={Math.cos(rad) * 35} cy={Math.sin(rad) * 35} rx="6" ry="18" fill="white"
+              transform={`rotate(${angle} ${Math.cos(rad) * 35} ${Math.sin(rad) * 35})`} />
           );
         })}
         <circle cx="0" cy="0" r="10" fill="white" />
       </g>
-
-      {/* Decorative border top */}
       <g opacity="0.15">
-        <path
-          d="M0,30 Q50,10 100,30 Q150,50 200,30 Q250,10 300,30 Q350,50 400,30 Q450,10 500,30 Q550,50 600,30 Q650,10 700,30 Q750,50 800,30"
-          stroke="white"
-          strokeWidth="1.5"
-          fill="none"
-        />
-        <path
-          d="M0,370 Q50,350 100,370 Q150,390 200,370 Q250,350 300,370 Q350,390 400,370 Q450,350 500,370 Q550,390 600,370 Q650,350 700,370 Q750,390 800,370"
-          stroke="white"
-          strokeWidth="1.5"
-          fill="none"
-        />
+        <path d="M0,30 Q50,10 100,30 Q150,50 200,30 Q250,10 300,30 Q350,50 400,30 Q450,10 500,30 Q550,50 600,30 Q650,10 700,30 Q750,50 800,30" stroke="white" strokeWidth="1.5" fill="none" />
+        <path d="M0,370 Q50,350 100,370 Q150,390 200,370 Q250,350 300,370 Q350,390 400,370 Q450,350 500,370 Q550,390 600,370 Q650,350 700,370 Q750,390 800,370" stroke="white" strokeWidth="1.5" fill="none" />
       </g>
-
-      {/* Corner decorations */}
       <g opacity="0.12" fill="none" stroke="white" strokeWidth="1.5">
-        {/* Top left */}
         <path d="M20,20 L60,20 L60,24 M20,20 L20,60 L24,60" />
         <circle cx="40" cy="40" r="15" />
-        {/* Top right */}
         <path d="M780,20 L740,20 L740,24 M780,20 L780,60 L776,60" />
         <circle cx="760" cy="40" r="15" />
-        {/* Bottom left */}
-        <path d="M20,380 L60,380 L60,376 M20,380 L20,340 L24,340" />
-        {/* Bottom right */}
-        <path d="M780,380 L740,380 L740,376 M780,380 L780,340 L776,340" />
       </g>
-
-      {/* Floating dots */}
-      {[[150, 80], [650, 100], [400, 50], [200, 320], [600, 300]].map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="2" fill="white" opacity="0.2" />
-      ))}
     </svg>
   );
 }
 
 export default function CollectionBanner() {
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8" id="collections">
+    <section className="py-16 px-4 sm:px-6 lg:px-8" id="collections-banner">
       <div className="max-w-7xl mx-auto">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brown-700 via-brown-800 to-brown-900 min-h-72 flex items-center shadow-2xl shadow-brown-900/30">
-          {/* Background SVG pattern */}
           <AngkorPattern />
-
-          {/* Color overlays */}
           <div className="absolute inset-0 bg-gradient-to-r from-brown-900/60 via-transparent to-brown-900/40" />
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gold-400 via-clay-400 to-gold-600 opacity-80" />
 
-          {/* Content */}
           <div className="relative z-10 w-full px-8 sm:px-12 lg:px-16 py-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
             <div className="space-y-4 max-w-xl">
-              {/* Label */}
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold-400/20 border border-gold-400/30 rounded-full text-gold-300 text-xs font-semibold tracking-wider uppercase backdrop-blur-sm">
                 <Sparkles className="w-3 h-3" />
                 New Collection 2025
               </div>
 
-              {/* Headline */}
               <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
                 New Khmer Silk{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-gold-500">
-                  Collection
-                </span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-gold-500">Collection</span>
               </h2>
 
-              {/* Decorative line */}
               <div className="flex items-center gap-3">
                 <div className="h-px w-12 bg-gold-400/60" />
                 <div className="w-1.5 h-1.5 rounded-full bg-gold-400" />
                 <div className="h-px w-6 bg-gold-400/40" />
               </div>
 
-              {/* Description */}
               <p className="text-ivory/80 text-base leading-relaxed">
                 Soft colors, traditional inspiration, and modern design made for your daily style. Each piece honors the beauty of Cambodian silk tradition.
               </p>
 
-              {/* Features */}
               <div className="flex flex-wrap gap-4 pt-1">
                 {["Silk-inspired textures", "Limited edition", "Hand-finished"].map((feat) => (
                   <div key={feat} className="flex items-center gap-1.5 text-gold-300/80 text-sm">
@@ -152,13 +84,11 @@ export default function CollectionBanner() {
               </div>
             </div>
 
-            {/* CTA */}
             <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-center gap-4">
-              <button className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-brown-900 font-bold rounded-2xl shadow-xl shadow-gold-900/30 hover:shadow-gold-900/50 transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
+              <Link to="/collections" className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-brown-900 font-bold rounded-2xl shadow-xl shadow-gold-900/30 hover:shadow-gold-900/50 transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
                 Explore Collection
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-
+              </Link>
               <div className="text-ivory/60 text-sm text-center lg:text-center">
                 <span className="text-gold-300 font-bold">24</span> pieces available
               </div>

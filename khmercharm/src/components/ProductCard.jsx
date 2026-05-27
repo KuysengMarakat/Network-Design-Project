@@ -1,112 +1,105 @@
 import { useState } from "react";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Heart, ShoppingCart, Star, Eye } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useWishlist } from "../context/WishlistContext";
+import { useToast } from "../context/ToastContext";
+import ProductIllustration from "./ProductIllustration";
 
-// SVG product illustration (no external images needed)
-function ProductIllustration({ product }) {
-  const icons = {
-    "Golden Lotus Bracelet":  { emoji: "💛", desc: "Gold Bracelet",  accent: "#d4a017" },
-    "Angkor Pearl Necklace":  { emoji: "📿", desc: "Pearl Necklace", accent: "#226638" },
-    "Silk Charm Hair Clip":   { emoji: "🌸", desc: "Hair Clip",      accent: "#bf3a1e" },
-    "Handmade Woven Bag":     { emoji: "👜", desc: "Woven Bag",      accent: "#8f5d2c" },
-    "Khmer Pattern Ring":     { emoji: "💍", desc: "Silver Ring",    accent: "#3a8551" },
-    "Mini Lotus Phone Charm": { emoji: "🌺", desc: "Phone Charm",    accent: "#bf3a1e" },
-    "Royal Gold Earrings":    { emoji: "✨", desc: "Earrings",       accent: "#d4a017" },
-    "Clay Stone Keychain":    { emoji: "🗝️", desc: "Keychain",       accent: "#6e4318" },
-  };
-  const info = icons[product.name] || { emoji: "💎", desc: "Accessory", accent: "#d4a017" };
-
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-3 relative">
-      <div className="absolute inset-0 opacity-60"
-        style={{ background: `linear-gradient(135deg, ${info.accent}15 0%, #faf7f0 50%, ${info.accent}08 100%)` }} />
-      <div className="absolute inset-0 opacity-20"
-        style={{ backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(212,160,23,0.04) 3px,rgba(212,160,23,0.04) 6px)" }} />
-      <div className="absolute w-28 h-28 rounded-full opacity-10"
-        style={{ background: `radial-gradient(circle, ${info.accent} 0%, transparent 70%)` }} />
-      <div className="relative text-5xl z-10 drop-shadow-sm">{info.emoji}</div>
-      <div className="relative z-10 text-xs font-medium px-3 py-1 rounded-full bg-white/70 text-brown-600 backdrop-blur-sm border border-white/80">
-        {info.desc}
-      </div>
-      <div className="absolute top-3 right-3 opacity-40">
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <path d="M8,0 L9,7 L16,8 L9,9 L8,16 L7,9 L0,8 L7,7 Z" fill={info.accent} />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-// Map backend product shape → display shape
-function normalise(product) {
+// Normalise data shape: backend uses snake_case, frontend uses camelCase
+function normalise(p) {
   return {
-    id:            product.id,
-    name:          product.name,
-    category:      product.category,
-    price:         product.price_usd    ?? product.price    ?? 0,
-    priceKHR:      product.price_khr    ?? product.priceKHR ?? 0,
-    rating:        product.rating       ?? 0,
-    reviews:       product.review_count ?? product.reviews  ?? 0,
-    tag:           product.tag          ?? null,
-    onSale:        product.tag === "Sale" || product.onSale || false,
-    originalPrice: product.originalPrice ?? null,
-    tagColor:      tagColour(product.tag),
-    gradient:      product.gradient     ?? "",
+    id:            p.id,
+    name:          p.name,
+    category:      p.category,
+    priceUSD:      p.priceUSD ?? p.price_usd ?? p.price ?? 0,
+    priceKHR:      p.priceKHR ?? p.price_khr ?? 0,
+    rating:        p.rating ?? 0,
+    reviewCount:   p.reviewCount ?? p.review_count ?? p.reviews ?? 0,
+    tag:           p.tag ?? null,
+    isSale:        p.isSale ?? p.tag === "Sale",
+    isNew:         p.isNew ?? p.tag === "New",
+    isBestSeller:  p.isBestSeller ?? p.tag === "Popular",
+    originalPriceUSD: p.originalPriceUSD ?? p.originalPrice ?? null,
   };
 }
 
-function tagColour(tag) {
-  if (tag === "Sale")    return "bg-clay-500 text-white";
-  if (tag === "New")     return "bg-khmer-green-500 text-white";
-  if (tag === "Popular") return "bg-gold-400 text-white";
-  return "bg-brown-200 text-brown-700";
-}
-
-export default function ProductCard({ product: raw, onLoginRequired }) {
+export default function ProductCard({ product: raw, onQuickView }) {
   const product = normalise(raw);
-  const { addToCart }     = useCart();
-  const { user }          = useAuth();
-  const [wishlisted,  setWishlisted]  = useState(false);
-  const [cartStatus,  setCartStatus]  = useState("idle"); // idle | loading | added | error
+  const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const toast = useToast();
+  const [cartStatus, setCartStatus] = useState("idle");
 
-  const handleAddToCart = async () => {
-    if (!user) { onLoginRequired?.(); return; }
+  const wishlisted = isWishlisted(product.id);
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      toast.info("Please login to add items to your cart");
+      return;
+    }
     setCartStatus("loading");
     try {
       await addToCart(product.id, 1);
       setCartStatus("added");
-      setTimeout(() => setCartStatus("idle"), 1800);
-    } catch {
-      setCartStatus("error");
-      setTimeout(() => setCartStatus("idle"), 2000);
+      toast.success(`${product.name} added to cart`);
+      setTimeout(() => setCartStatus("idle"), 1500);
+    } catch (err) {
+      toast.error(err.message || "Could not add to cart");
+      setCartStatus("idle");
     }
   };
 
-  const cartLabel = {
-    idle:    "Add to Cart",
-    loading: "Adding…",
-    added:   "Added! ✓",
-    error:   "Try again",
-  }[cartStatus];
+  const handleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      priceUSD: product.priceUSD,
+      priceKHR: product.priceKHR,
+      tag: product.tag,
+    });
+    toast.success(wishlisted ? "Removed from wishlist" : "Added to wishlist");
+  };
 
-  const cartStyle = {
-    idle:    "bg-gold-50 hover:bg-gold-500 text-gold-700 hover:text-white border border-gold-200 hover:border-gold-500 hover:shadow-md hover:shadow-gold-200",
-    loading: "bg-gold-100 text-gold-500 border border-gold-200 cursor-wait",
-    added:   "bg-khmer-green-500 text-white scale-95 border border-khmer-green-500",
-    error:   "bg-clay-100 text-clay-600 border border-clay-200",
-  }[cartStatus];
+  const handleQuickView = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onQuickView?.(raw);
+  };
+
+  const tagStyle =
+    product.tag === "Sale"    ? "bg-clay-500 text-white" :
+    product.tag === "New"     ? "bg-khmer-green-500 text-white" :
+    product.tag === "Popular" ? "bg-gold-400 text-white" :
+    "bg-brown-200 text-brown-700";
+
+  const cartLabel = { idle: "Add to Cart", loading: "Adding…", added: "Added! ✓" }[cartStatus];
+  const cartCls = cartStatus === "added"
+    ? "bg-khmer-green-500 text-white border-khmer-green-500"
+    : cartStatus === "loading"
+    ? "bg-gold-100 text-gold-500 border-gold-200 cursor-wait"
+    : "bg-gold-50 hover:bg-gold-500 text-gold-700 hover:text-white border-gold-200 hover:border-gold-500 hover:shadow-md hover:shadow-gold-200";
 
   return (
-    <div className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-ivory-dark/60 flex flex-col">
-
+    <Link
+      to={`/product/${product.id}`}
+      className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-ivory-dark/60 flex flex-col"
+    >
       {/* Image */}
       <div className="relative h-52 overflow-hidden bg-ivory">
         <ProductIllustration product={product} />
 
         {/* Wishlist */}
         <button
-          onClick={() => setWishlisted((v) => !v)}
+          onClick={handleWishlist}
+          aria-label="Wishlist"
           className={`absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 hover:scale-110 ${
             wishlisted ? "bg-clay-500 text-white" : "bg-white/90 text-brown-400 hover:text-clay-500"
           }`}
@@ -114,25 +107,29 @@ export default function ProductCard({ product: raw, onLoginRequired }) {
           <Heart className={`w-4 h-4 ${wishlisted ? "fill-white" : ""}`} />
         </button>
 
-        {/* Tag badge */}
+        {/* Tag */}
         {product.tag && (
-          <div className={`absolute top-3 left-3 z-10 px-2.5 py-0.5 rounded-full text-xs font-semibold ${product.tagColor}`}>
+          <div className={`absolute top-3 left-3 z-10 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${tagStyle}`}>
             {product.tag}
           </div>
         )}
-        {product.onSale && (
-          <div className="absolute bottom-3 left-3 z-10 px-2 py-0.5 bg-clay-500 text-white text-xs font-bold rounded-md">
-            SALE
-          </div>
+
+        {/* Quick View on hover */}
+        {onQuickView && (
+          <button
+            onClick={handleQuickView}
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-brown-900/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-brown-900"
+          >
+            <Eye className="w-3.5 h-3.5" /> Quick View
+          </button>
         )}
-        <div className="absolute inset-0 bg-brown-900/0 group-hover:bg-brown-900/5 transition-colors duration-300" />
       </div>
 
       {/* Info */}
       <div className="p-4 flex flex-col flex-1 gap-2">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-gold-600">{product.category}</span>
 
-        <h3 className="font-display font-semibold text-brown-900 leading-tight group-hover:text-gold-700 transition-colors">
+        <h3 className="font-display font-semibold text-brown-900 leading-tight group-hover:text-gold-700 transition-colors line-clamp-2">
           {product.name}
         </h3>
 
@@ -143,17 +140,15 @@ export default function ProductCard({ product: raw, onLoginRequired }) {
               <Star key={i} className={`w-3 h-3 ${i < Math.round(product.rating) ? "fill-gold-400 text-gold-400" : "text-brown-200"}`} />
             ))}
           </div>
-          {product.reviews > 0 && (
-            <span className="text-xs text-brown-500">({product.reviews})</span>
-          )}
+          {product.reviewCount > 0 && <span className="text-xs text-brown-500">({product.reviewCount})</span>}
         </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-2 mt-auto">
-          <span className="font-bold text-brown-900 text-lg">${product.price.toFixed(2)}</span>
+          <span className="font-bold text-brown-900 text-lg">${product.priceUSD.toFixed(2)}</span>
           <span className="text-xs text-brown-400">{product.priceKHR.toLocaleString()}៛</span>
-          {product.onSale && product.originalPrice && (
-            <span className="text-xs text-brown-400 line-through ml-auto">${product.originalPrice.toFixed(2)}</span>
+          {product.isSale && product.originalPriceUSD && (
+            <span className="text-xs text-brown-400 line-through ml-auto">${product.originalPriceUSD.toFixed(2)}</span>
           )}
         </div>
 
@@ -161,12 +156,12 @@ export default function ProductCard({ product: raw, onLoginRequired }) {
         <button
           onClick={handleAddToCart}
           disabled={cartStatus === "loading"}
-          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${cartStyle}`}
+          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 ${cartCls}`}
         >
           <ShoppingCart className="w-4 h-4" />
           {cartLabel}
         </button>
       </div>
-    </div>
+    </Link>
   );
 }
