@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
-import { AuthProvider }  from "./context/AuthContext";
-import { CartProvider }  from "./context/CartContext";
-import Navbar            from "./components/Navbar";
-import Hero              from "./components/Hero";
-import CategoryCard      from "./components/CategoryCard";
-import ProductCard       from "./components/ProductCard";
-import CollectionBanner  from "./components/CollectionBanner";
-import Benefits          from "./components/Benefits";
-import Reviews           from "./components/Reviews";
-import Newsletter        from "./components/Newsletter";
-import Footer            from "./components/Footer";
-import LoginModal        from "./components/LoginModal";
-import CartDrawer        from "./components/CartDrawer";
-import { productsAPI }   from "./api/api";
+import { AuthProvider }    from "./context/AuthContext";
+import { CartProvider }    from "./context/CartContext";
+import { useAuth }         from "./context/AuthContext";
+import Navbar              from "./components/Navbar";
+import Hero                from "./components/Hero";
+import CategoryCard        from "./components/CategoryCard";
+import ProductCard         from "./components/ProductCard";
+import CollectionBanner    from "./components/CollectionBanner";
+import Benefits            from "./components/Benefits";
+import Reviews             from "./components/Reviews";
+import Newsletter          from "./components/Newsletter";
+import Footer              from "./components/Footer";
+import LoginModal          from "./components/LoginModal";
+import CartDrawer          from "./components/CartDrawer";
+import AdminLayout         from "./admin/AdminLayout";
+import AdminDashboard      from "./admin/AdminDashboard";
+import AdminProducts       from "./admin/AdminProducts";
+import AdminOrders         from "./admin/AdminOrders";
+import AdminUsers          from "./admin/AdminUsers";
+import { productsAPI }     from "./api/api";
 import { categories, reviews, benefits } from "./data/sampleData";
 
 const FILTERS = ["All", "New Arrival", "Best Seller", "Sale"];
@@ -39,7 +45,8 @@ function ProductSkeleton() {
   );
 }
 
-function AppContent() {
+function AppContent({ onGoAdmin }) {
+  const { user } = useAuth();
   const [activeFilter,   setActiveFilter]   = useState("All");
   const [products,       setProducts]       = useState([]);
   const [loadingProducts,setLoadingProducts] = useState(true);
@@ -75,7 +82,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-ivory font-body">
-      <Navbar onLoginClick={() => setShowLogin(true)} onCartClick={() => setShowCart(true)} />
+      <Navbar onLoginClick={() => setShowLogin(true)} onCartClick={() => setShowCart(true)} onAdminClick={onGoAdmin} />
 
       {/* Modals */}
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
@@ -187,8 +194,35 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <AppContent />
+        <Router />
       </CartProvider>
     </AuthProvider>
   );
+}
+
+// ── Simple client-side router (no react-router needed) ──────
+function Router() {
+  const { user, loading } = useAuth();
+  const [page, setPage]   = useState("storefront"); // storefront | admin/*
+
+  // Auto-redirect admin to dashboard on login
+  useEffect(() => {
+    if (!loading && user?.role === "admin" && page === "storefront") {
+      // Don't auto-redirect — let admin choose to go to dashboard
+    }
+  }, [user, loading, page]);
+
+  // Show admin panel
+  if (!loading && user?.role === "admin" && page !== "storefront") {
+    return (
+      <AdminLayout page={page} onNavigate={setPage}>
+        {page === "dashboard" && <AdminDashboard onNavigate={setPage} />}
+        {page === "products"  && <AdminProducts />}
+        {page === "orders"    && <AdminOrders />}
+        {page === "users"     && <AdminUsers />}
+      </AdminLayout>
+    );
+  }
+
+  return <AppContent onGoAdmin={() => setPage("dashboard")} />;
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, ShoppingCart, User, Menu, X, Sparkles, LogOut, Package, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, Sparkles, LogOut, Package, ChevronDown, Shield } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
-export default function Navbar({ onLoginClick, onCartClick }) {
+export default function Navbar({ onLoginClick, onCartClick, onAdminClick }) {
   const { user, logout }   = useAuth();
   const { itemCount }      = useCart();
   const [isOpen,   setIsOpen]   = useState(false);
@@ -115,6 +115,14 @@ export default function Navbar({ onLoginClick, onCartClick }) {
                     >
                       <Package className="w-4 h-4" /> My Orders
                     </button>
+                    {user.role === "admin" && (
+                      <button
+                        onClick={() => { setDropdown(false); onAdminClick?.(); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-clay-600 hover:bg-clay-50 font-semibold transition-colors"
+                      >
+                        <Shield className="w-4 h-4" /> Admin Dashboard
+                      </button>
+                    )}
                     <div className="border-t border-gold-50 mt-1 pt-1">
                       <button
                         onClick={() => { logout(); setDropdown(false); }}

@@ -60,3 +60,14 @@ export const ordersAPI = {
   getAll:   ()                        => request("GET",  "/orders"),
   getOne:   (id)                      => request("GET",  `/orders/${id}`),
 };
+
+// ── Admin ─────────────────────────────────────
+export const adminAPI = {
+  getDashboard:      ()              => request("GET",  "/admin/dashboard"),
+  getUsers:          ()              => request("GET",  "/admin/users"),
+  getOrders:         ()              => request("GET",  "/admin/orders"),
+  updateOrderStatus: (id, status)    => request("PUT",  `/admin/orders/${id}/status`, { status }),
+  createProduct:     (data)          => request("POST", "/products", data),
+  updateProduct:     (id, data)      => request("PUT",  `/products/${id}`, data),
+  deleteProduct:     (id)            => request("DELETE", `/products/${id}`),
+};
