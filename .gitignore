@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────
+#  Root-level .gitignore (extra safety net).
+#  Each subfolder has its own .gitignore as well.
+# ─────────────────────────────────────────────
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env files (never commit secrets!)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Build outputs
+dist/
+build/
+
+# SQLite database files (regenerated automatically)
+*.db
+*.db-shm
+*.db-wal
+
+# Uploaded files (user content)
+backend/uploads/*
+!backend/uploads/.gitkeep
