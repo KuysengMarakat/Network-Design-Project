@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KhmerCharm API Tester</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #faf7f0; color: #2c1a08; }
+    header {
+      background: linear-gradient(135deg, #b8860b, #bf3a1e);
+      color: white; padding: 20px 32px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    header h1 { font-size: 22px; }
+    header p  { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+    .badge { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 3px 10px; font-size: 12px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+    .status-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: white; border-radius: 12px; padding: 14px 20px;
+      border: 1px solid #e8d5c4; margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+    .dot.green { background: #3a8551; box-shadow: 0 0 0 3px rgba(58,133,81,0.2); }
+    .dot.red   { background: #bf3a1e; box-shadow: 0 0 0 3px rgba(191,58,30,0.2); }
+    .dot.pulse { animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media(max-width:700px){ .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: white; border-radius: 14px; padding: 18px;
+      border: 1px solid #e8d5c4;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap-6px; }
+    .card h3 .tag {
+      font-size: 10px; padding: 2px 7px; border-radius: 10px; margin-left: 8px; font-weight: 600;
+    }
+    .tag.vuln { background: #fad9cc; color: #bf3a1e; }
+    .tag.safe  { background: #cde2d3; color: #226638; }
+    .tag.info  { background: #f9eecc; color: #7a5507; }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    button {
+      padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: all 0.15s;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+    .btn-gold    { background: #d4a017; color: white; }
+    .btn-green   { background: #3a8551; color: white; }
+    .btn-red     { background: #bf3a1e; color: white; }
+    .btn-dark    { background: #41270d; color: white; }
+    .btn-gray    { background: #e8d5c4; color: #41270d; }
+
+    .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    input[type=text], input[type=email], input[type=password] {
+      flex: 1; padding: 8px 12px; border: 1px solid #e8d5c4;
+      border-radius: 8px; font-size: 13px; background: #faf7f0;
+      outline: none;
+    }
+    input:focus { border-color: #d4a017; background: white; }
+
+    .response {
+      background: #1e1510; color: #f0d090; border-radius: 10px;
+      padding: 12px 14px; font-family: 'Consolas', monospace; font-size: 12px;
+      min-height: 60px; max-height: 220px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word;
+      border: 1px solid #3d2903;
+    }
+    .response.error  { color: #ff8080; }
+    .response.warn   { color: #ffd080; }
+    .response.success{ color: #90d090; }
+
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #8f5d2c; margin: 20px 0 10px;
+    }
+    .token-box {
+      background: #fdf8ee; border: 1px solid #f2d98a; border-radius: 8px;
+      padding: 8px 12px; font-size: 11px; font-family: monospace;
+      color: #7a5507; word-break: break-all; margin-bottom: 10px;
+      min-height: 28px;
+    }
+    footer { text-align: center; padding: 24px; font-size: 12px; color: #8f5d2c; opacity: 0.7; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🇰🇭 KhmerCharm API Tester</h1>
+    <p>Visual test panel for the KhmerCharm backend — Educational Demo</p>
+  </div>
+  <span class="badge">⚠️ localhost only</span>
+</header>
+
+<main>
+
+  <!-- Server Status -->
+  <div class="status-bar">
+    <div class="dot pulse" id="statusDot"></div>
+    <span id="statusText" style="font-weight:600;">Checking server...</span>
+    <span style="margin-left:auto; font-size:12px; color:#8f5d2c;" id="statusUrl">http://localhost:5000</span>
+    <button class="btn-gray" onclick="checkHealth()" style="padding:6px 12px; font-size:12px;">↺ Refresh</button>
+  </div>
+
+  <!-- Token display -->
+  <div class="section-label">🔑 Current JWT Token (stored after login)</div>
+  <div class="token-box" id="tokenDisplay">No token yet — login below to get one.</div>
+
+  <div class="grid">
+
+    <!-- ── AUTH ── -->
+    <div class="card">
+      <h3>🔐 Authentication <span class="tag info">AUTH</span></h3>
+      <div class="section-label">Login</div>
+      <div class="input-row">
+        <input type="email" id="loginEmail" value="admin@khmercharm.com" placeholder="Email" />
+      </div>
+      <div class="input-row">
+        <input type="password" id="loginPassword" value="admin123" placeholder="Password" />
+      </div>
+      <div class="btn-row">
+        <button class="btn-gold" onclick="doLogin()">Login as Admin</button>
+        <button class="btn-gray" onclick="loginAs('customer@khmercharm.com','customer123')">Login as Customer</button>
+        <button class="btn-gray" onclick="doGetMe()">GET /me</button>
+        <button class="btn-gray" onclick="clearToken()">Clear Token</button>
+      </div>
+      <div class="response" id="authResponse">Click a button above...</div>
+    </div>
+
+    <!-- ── PRODUCTS ── -->
+    <div class="card">
+      <h3>🛍️ Products <span class="tag info">PUBLIC</span></h3>
+      <div class="btn-row">
+        <button class="btn-gold" onclick="getProducts()">All Products</button>
+        <button class="btn-gray" onclick="getProducts('?tag=Sale')">Sale Items</button>
+        <button class="btn-gray" onclick="getProducts('?tag=New')">New Arrivals</button>
+        <button class="btn-gray" onclick="getProducts('?category=Bracelets')">Bracelets</button>
+        <button class="btn-gray" onclick="getProducts('?search=lotus')">Search "lotus"</button>
+        <button class="btn-gray" onclick="getProduct(1)">Product #1</button>
+      </div>
+      <div class="response" id="productsResponse">Click a button above...</div>
+    </div>
+
+    <!-- ── SQL INJECTION DEMO ── -->
+    <div class="card">
+      <h3>💉 SQL Injection Demo <span class="tag vuln">⚠️ VULNERABLE</span></h3>
+      <div class="input-row">
+        <input type="text" id="sqliKeyword" value="bracelet" placeholder="Search keyword..." />
+      </div>
+      <div class="btn-row">
+        <button class="btn-gold" onclick="secureSearch()">✅ Secure Search</button>
+        <button class="btn-red"  onclick="vulnSearch()">⚠️ Vulnerable Search</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn-red" onclick="sqliAttack1()">ATTACK 1: ' OR '1'='1</button>
+        <button class="btn-red" onclick="sqliAttack2()">ATTACK 2: UNION dump users</button>
+      </div>
+      <div class="response" id="sqliResponse">Try the attacks above. Vulnerable = returns all rows. Secure = returns 0.</div>
+    </div>
+
+    <!-- ── BROKEN ACCESS CONTROL ── -->
+    <div class="card">
+      <h3>🔓 Broken Access Control <span class="tag vuln">⚠️ VULNERABLE</span></h3>
+      <p style="font-size:12px;color:#8f5d2c;margin-bottom:12px;">
+        Demo: access admin data without logging in.
+      </p>
+      <div class="btn-row">
+        <button class="btn-red"   onclick="bacVulnerable()">⚠️ GET /admin/demo-users (NO token)</button>
+        <button class="btn-green" onclick="bacSecure()">✅ GET /admin/secure-users (with token)</button>
+        <button class="btn-gold"  onclick="getAdminUsers()">GET /admin/users (admin only)</button>
+        <button class="btn-gold"  onclick="getDashboard()">Dashboard Stats</button>
+      </div>
+      <div class="response" id="bacResponse">Click vulnerable → see passwords. Click secure → see 401.</div>
+    </div>
+
+    <!-- ── CART ── -->
+    <div class="card">
+      <h3>🛒 Cart <span class="tag info">REQUIRES LOGIN</span></h3>
+      <div class="btn-row">
+        <button class="btn-gold" onclick="getCart()">View Cart</button>
+        <button class="btn-green" onclick="addToCart(1,1)">Add Product #1</button>
+        <button class="btn-green" onclick="addToCart(2,1)">Add Product #2</button>
+        <button class="btn-gray" onclick="clearCart()">Clear Cart</button>
+      </div>
+      <div class="response" id="cartResponse">Login first, then test cart actions...</div>
+    </div>
+
+    <!-- ── FILE UPLOAD DEMO ── -->
+    <div class="card">
+      <h3>📁 File Upload Demo <span class="tag vuln">⚠️ VULNERABLE</span></h3>
+      <p style="font-size:12px;color:#8f5d2c;margin-bottom:10px;">
+        Vulnerable: accepts any file type (try uploading a .php or .txt renamed to .php).<br/>
+        Secure: only jpg/png/webp, 2MB limit, UUID filename.
+      </p>
+      <input type="file" id="uploadFile" style="margin-bottom:10px;font-size:13px;" />
+      <div class="btn-row">
+        <button class="btn-red"   onclick="uploadDemo()">⚠️ Upload (no validation)</button>
+        <button class="btn-green" onclick="uploadSecure()">✅ Upload (secure — needs admin token)</button>
+      </div>
+      <div class="response" id="uploadResponse">Select a file then click upload...</div>
+    </div>
+
+  </div>
+
+</main>
+<footer>KhmerCharm Accessories API Tester · Educational Demo Only · localhost:5000</footer>
+
+<script>
+  const BASE = "http://localhost:5000/api";
+  let currentToken = localStorage.getItem("khmercharm_token") || "";
+
+  // ── On load ──
+  window.onload = () => {
+    checkHealth();
+    updateTokenDisplay();
+  };
+
+  function updateTokenDisplay() {
+    const box = document.getElementById("tokenDisplay");
+    if (currentToken) {
+      box.textContent = currentToken;
+      box.style.color = "#3a8551";
+    } else {
+      box.textContent = "No token yet — login below to get one.";
+      box.style.color = "#8f5d2c";
+    }
+  }
+
+  function clearToken() {
+    currentToken = "";
+    localStorage.removeItem("khmercharm_token");
+    updateTokenDisplay();
+    showResponse("authResponse", { message: "Token cleared." }, "warn");
+  }
+
+  function showResponse(id, data, type = "success") {
+    const el = document.getElementById(id);
+    el.textContent = JSON.stringify(data, null, 2);
+    el.className = "response " + type;
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = "❌ " + msg;
+    el.className = "response error";
+  }
+
+  async function api(method, path, body, token) {
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+    const opts = { method, headers };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(BASE + path, opts);
+    return r.json();
+  }
+
+  // ── Health ──
+  async function checkHealth() {
+    const dot  = document.getElementById("statusDot");
+    const text = document.getElementById("statusText");
+    dot.className = "dot pulse";
+    try {
+      const d = await fetch(BASE.replace("/api","") + "/api/health").then(r => r.json());
+      dot.className = "dot green";
+      text.textContent = "✅ Server is running — " + d.message;
+    } catch {
+      dot.className = "dot red";
+      text.textContent = "❌ Server is NOT running. Start it with: node server.js";
+      text.style.color = "#bf3a1e";
+    }
+  }
+
+  // ── Auth ──
+  async function doLogin() {
+    try {
+      const email    = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      const d = await api("POST", "/auth/login", { email, password });
+      if (d.success) {
+        currentToken = d.data.token;
+        localStorage.setItem("khmercharm_token", currentToken);
+        updateTokenDisplay();
+        showResponse("authResponse", { message: "Login success!", user: d.data.user }, "success");
+      } else {
+        showResponse("authResponse", d, "error");
+      }
+    } catch(e) { showError("authResponse", e.message); }
+  }
+
+  async function loginAs(email, password) {
+    document.getElementById("loginEmail").value = email;
+    document.getElementById("loginPassword").value = password;
+    await doLogin();
+  }
+
+  async function doGetMe() {
+    try {
+      const d = await api("GET", "/auth/me", null, currentToken);
+      showResponse("authResponse", d, d.success ? "success" : "error");
+    } catch(e) { showError("authResponse", e.message); }
+  }
+
+  // ── Products ──
+  async function getProducts(qs = "") {
+    try {
+      const d = await api("GET", "/products" + qs);
+      showResponse("productsResponse", {
+        count: d.data?.count,
+        products: d.data?.products?.map(p => `${p.id}. ${p.name} — $${p.price_usd} [${p.tag||""}]`)
+      }, "success");
+    } catch(e) { showError("productsResponse", e.message); }
+  }
+
+  async function getProduct(id) {
+    try {
+      const d = await api("GET", "/products/" + id);
+      showResponse("productsResponse", d.data?.product || d, "success");
+    } catch(e) { showError("productsResponse", e.message); }
+  }
+
+  // ── SQL Injection ──
+  async function vulnSearch() {
+    const kw = document.getElementById("sqliKeyword").value;
+    try {
+      const d = await fetch(`${BASE}/products/vulnerable-search?keyword=${encodeURIComponent(kw)}`).then(r=>r.json());
+      const type = d.data?.count > 0 ? "warn" : "success";
+      showResponse("sqliResponse", {
+        warning: d.warning,
+        query_used: d.query_used,
+        count: d.data?.count,
+        names: d.data?.products?.map(p => p.name || p.email)
+      }, type);
+    } catch(e) { showError("sqliResponse", e.message); }
+  }
+
+  async function secureSearch() {
+    const kw = document.getElementById("sqliKeyword").value;
+    try {
+      const d = await fetch(`${BASE}/products/secure-search?keyword=${encodeURIComponent(kw)}`).then(r=>r.json());
+      showResponse("sqliResponse", {
+        message: d.message,
+        count: d.data?.count,
+        names: d.data?.products?.map(p => p.name)
+      }, "success");
+    } catch(e) { showError("sqliResponse", e.message); }
+  }
+
+  async function sqliAttack1() {
+    document.getElementById("sqliKeyword").value = "' OR '1'='1";
+    await vulnSearch();
+  }
+
+  async function sqliAttack2() {
+    document.getElementById("sqliKeyword").value =
+      "' UNION SELECT id,name,email,password,role,price_usd,price_khr,image_url,stock,tag,rating,created_at FROM users --";
+    await vulnSearch();
+  }
+
+  // ── BAC ──
+  async function bacVulnerable() {
+    try {
+      const d = await api("GET", "/admin/demo-users"); // NO token
+      showResponse("bacResponse", {
+        "⚠️ WARNING": d.warning,
+        userCount: d.data?.users?.length,
+        users: d.data?.users?.map(u => `${u.email} | password: ${u.password} | role: ${u.role}`)
+      }, "warn");
+    } catch(e) { showError("bacResponse", e.message); }
+  }
+
+  async function bacSecure() {
+    try {
+      const d = await api("GET", "/admin/secure-users"); // no token
+      showResponse("bacResponse", d, d.success ? "success" : "error");
+    } catch(e) { showError("bacResponse", e.message); }
+  }
+
+  async function getAdminUsers() {
+    try {
+      const d = await api("GET", "/admin/users", null, currentToken);
+      showResponse("bacResponse", { count: d.data?.count, users: d.data?.users?.map(u=>`${u.email} (${u.role})`) }, d.success?"success":"error");
+    } catch(e) { showError("bacResponse", e.message); }
+  }
+
+  async function getDashboard() {
+    try {
+      const d = await api("GET", "/admin/dashboard", null, currentToken);
+      showResponse("bacResponse", d.data || d, d.success?"success":"error");
+    } catch(e) { showError("bacResponse", e.message); }
+  }
+
+  // ── Cart ──
+  async function getCart() {
+    try {
+      const d = await api("GET", "/cart", null, currentToken);
+      showResponse("cartResponse", d.success ? { item_count: d.data.item_count, total_usd: d.data.total_usd, items: d.data.items?.map(i=>`${i.name} x${i.quantity}`) } : d, d.success?"success":"error");
+    } catch(e) { showError("cartResponse", e.message); }
+  }
+
+  async function addToCart(productId, qty) {
+    try {
+      const d = await api("POST", "/cart", { product_id: productId, quantity: qty }, currentToken);
+      showResponse("cartResponse", d.success ? { message: d.message, item_count: d.data.item_count } : d, d.success?"success":"error");
+    } catch(e) { showError("cartResponse", e.message); }
+  }
+
+  async function clearCart() {
+    try {
+      const d = await api("DELETE", "/cart", null, currentToken);
+      showResponse("cartResponse", d, d.success?"success":"error");
+    } catch(e) { showError("cartResponse", e.message); }
+  }
+
+  // ── Upload ──
+  async function uploadDemo() {
+    const fileInput = document.getElementById("uploadFile");
+    if (!fileInput.files[0]) return showError("uploadResponse", "Please select a file first.");
+    const form = new FormData();
+    form.append("file", fileInput.files[0]);
+    try {
+      const r = await fetch(`${BASE}/upload/demo`, { method: "POST", body: form });
+      const d = await r.json();
+      showResponse("uploadResponse", d, d.success ? "warn" : "error");
+    } catch(e) { showError("uploadResponse", e.message); }
+  }
+
+  async function uploadSecure() {
+    const fileInput = document.getElementById("uploadFile");
+    if (!fileInput.files[0]) return showError("uploadResponse", "Please select a file first.");
+    if (!currentToken) return showError("uploadResponse", "Login as admin first to use the secure upload endpoint.");
+    const form = new FormData();
+    form.append("file", fileInput.files[0]);
+    try {
+      const r = await fetch(`${BASE}/upload/secure`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + currentToken },
+        body: form,
+      });
+      const d = await r.json();
+      showResponse("uploadResponse", d, d.success ? "success" : "error");
+    } catch(e) { showError("uploadResponse", e.message); }
+  }
+</script>
+</body>
+</html>
