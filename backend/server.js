@@ -98,17 +98,27 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 // ─────────────────────────────────────────────
-//  Start Server
+//  Start Server — wait for DB to init first
+//  (sql.js loads its WASM asynchronously)
 // ─────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log("╔══════════════════════════════════════════════╗");
-  console.log("║   KhmerCharm Accessories — Backend API       ║");
-  console.log(`║   Running on http://localhost:${PORT}           ║`);
-  console.log("║   ⚠️  EDUCATIONAL DEMO — localhost only        ║");
-  console.log("╚══════════════════════════════════════════════╝");
-  console.log(`   NODE_ENV : ${process.env.NODE_ENV || "development"}`);
-  console.log(`   DB PATH  : ${process.env.DATABASE_PATH || "./database/khmercharm.db"}`);
-  console.log(`   FRONTEND : ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
-});
+const db = require("./database/db");
+
+db._init()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("╔══════════════════════════════════════════════╗");
+      console.log("║   KhmerCharm Accessories — Backend API       ║");
+      console.log(`║   Running on http://localhost:${PORT}           ║`);
+      console.log("║   ⚠️  EDUCATIONAL DEMO — localhost only        ║");
+      console.log("╚══════════════════════════════════════════════╝");
+      console.log(`   NODE_ENV : ${process.env.NODE_ENV || "development"}`);
+      console.log(`   DB PATH  : ${process.env.DATABASE_PATH || "./database/khmercharm.db"}`);
+      console.log(`   FRONTEND : ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
+    });
+  })
+  .catch((err) => {
+    console.error("[FATAL] Database failed to initialise:", err.message);
+    process.exit(1);
+  });
 
 module.exports = app;
