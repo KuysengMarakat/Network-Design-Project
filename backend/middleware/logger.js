@@ -2,13 +2,9 @@ const https = require('https');
 
 const FIREBASE_URL = 'https://phneak-tep-default-rtdb.asia-southeast1.firebasedatabase.app/security_logs.json';
 
-// ─────────────────────────────────────
-// Helper: Parse user-agent to short name
-// ─────────────────────────────────────
 function parseDevice(userAgent) {
   if (!userAgent) return 'Unknown';
 
-  // Detect browser
   let browser = 'Unknown';
   if (userAgent.includes('Edg/')) browser = 'Edge';
   else if (userAgent.includes('Chrome/')) browser = 'Chrome';
@@ -16,7 +12,6 @@ function parseDevice(userAgent) {
   else if (userAgent.includes('Safari/')) browser = 'Safari';
   else if (userAgent.includes('Opera/')) browser = 'Opera';
 
-  // Detect OS
   let os = 'Unknown';
   if (userAgent.includes('Windows')) os = 'Windows';
   else if (userAgent.includes('Android')) os = 'Android';
@@ -27,9 +22,6 @@ function parseDevice(userAgent) {
   return `${browser} on ${os}`;
 }
 
-// ─────────────────────────────────────
-// Helper: Format time to short readable
-// ─────────────────────────────────────
 function formatTime(date) {
   const d = date || new Date();
   const yyyy = d.getFullYear();
@@ -41,9 +33,6 @@ function formatTime(date) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
 
-// ─────────────────────────────────────
-// Helper: Get real IP
-// ─────────────────────────────────────
 function getRealIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) return forwarded.split(',')[0].trim();
@@ -51,17 +40,23 @@ function getRealIp(req) {
   return raw.replace(/^::ffff:/, '');
 }
 
-// ─────────────────────────────────────
-// Main logger function
-// ─────────────────────────────────────
 function logEvent(req, action, email) {
+  const shortDevice = parseDevice(req.headers['user-agent']);
+  const shortTime = formatTime(new Date());
+  const realIp = getRealIp(req);
+  
+  // DEBUG: Show what we're sending
+  console.log(`🔵 DEBUG - Device: ${shortDevice}`);
+  console.log(`🔵 DEBUG - Time: ${shortTime}`);
+  console.log(`🔵 DEBUG - IP: ${realIp}`);
+
   const data = JSON.stringify({
     websiteId: 'site_001',
     action: action,
     email: email || 'unknown',
-    ip: getRealIp(req),
-    device: parseDevice(req.headers['user-agent']),
-    time: formatTime(new Date())
+    ip: realIp,
+    device: shortDevice,
+    time: shortTime
   });
 
   const options = {
